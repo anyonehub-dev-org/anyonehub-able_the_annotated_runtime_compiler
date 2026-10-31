@@ -15,6 +15,7 @@ import kotlin.reflect.full.primaryConstructor
 
 import com.anyonehub.abl.cache.AblCacheManager
 import com.anyonehub.abl.cache.ScannedMetadataFbsData
+import com.anyonehub.abl.utils.EngineLogger
 
 /**
  * Represents the raw metadata extracted from scanning a single class.
@@ -66,18 +67,18 @@ class AblRuntimeScanner(private val cacheManager: AblCacheManager? = null) {
         if (cacheManager != null) {
             val cached = cacheManager.loadCache()
             if (cached != null && cached.isNotEmpty()) {
-                println("AblRuntimeScanner: Loaded AST metadata from FlatBuffers cache")
+                EngineLogger.logDebug("AblRuntimeScanner: Loaded AST metadata from FlatBuffers cache")
                 return cached.map { restoreFromCache(it) }
             }
         }
         
-        println("AblRuntimeScanner: Performing reflective sweep")
+        EngineLogger.logDebug("AblRuntimeScanner: Performing reflective sweep")
         val scanned = targets.map { scan(it) }
         
         if (cacheManager != null) {
             val fbsData = scanned.map { convertToFbsData(it) }
             cacheManager.saveCache(fbsData)
-            println("AblRuntimeScanner: Saved AST metadata to FlatBuffers cache")
+            EngineLogger.logDebug("AblRuntimeScanner: Saved AST metadata to FlatBuffers cache")
         }
         
         return scanned

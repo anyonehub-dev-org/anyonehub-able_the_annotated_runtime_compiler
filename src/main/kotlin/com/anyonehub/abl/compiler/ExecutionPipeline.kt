@@ -2,6 +2,7 @@ package com.anyonehub.abl.compiler
 
 import com.anyonehub.abl.scanner.AblRuntimeScanner
 import com.anyonehub.abl.scanner.DependencyGraphBuilder
+import com.anyonehub.abl.utils.EngineLogger
 import java.io.File
 import kotlin.reflect.KClass
 
@@ -28,15 +29,15 @@ class ExecutionPipeline(
         // Step 2: Assemble Dependency Graph
         val executionMap = graphBuilder.buildGraph(scannedMetadata)
         
-        println("Execution Map generated with ${executionMap.modules.size} modules and ${executionMap.entryPoints.size} entry points.")
+        EngineLogger.logInfo("Execution Map generated with ${executionMap.modules.size} modules and ${executionMap.entryPoints.size} entry points.")
         
         // Step 3: Embeddable JVM Compilation (Outputs .class Bytes natively into memory)
         val jvmBytecodeMap = compilerBridge.compile(sourceFiles, classpath)
-        println("Successfully compiled ${jvmBytecodeMap.size} classes to JVM bytecode.")
+        EngineLogger.logInfo("Successfully compiled ${jvmBytecodeMap.size} classes to JVM bytecode.")
         
         // Step 4: D8 / R8 DEX Transpilation (In-Memory Dalvik conversion)
         val dexBytes = dexProcessor.transpileToDex(jvmBytecodeMap)
-        println("Transpiled to Dalvik bytecode. DEX size: ${dexBytes.size} bytes.")
+        EngineLogger.logInfo("Transpiled to Dalvik bytecode. DEX size: ${dexBytes.size} bytes.")
         
         return dexBytes
     }

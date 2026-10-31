@@ -1,6 +1,7 @@
 package com.anyonehub.abl.compiler
 
 import com.anyonehub.abl.exceptions.AblCompilationException
+import com.anyonehub.abl.utils.EngineLogger
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
@@ -57,9 +58,9 @@ class AblCompilerBridgeImpl : AblCompilerBridge {
                         val formatted = "[$severity] $message at $location"
                         if (severity.isError) {
                             errors.add(formatted)
-                            System.err.println("Compiler Error: $formatted")
+                            EngineLogger.logError("Compiler Error: $formatted")
                         } else if (severity.isWarning) {
-                            System.err.println("Compiler Warning: $formatted")
+                            EngineLogger.logWarn("Compiler Warning: $formatted")
                         }
                     }
                 }
