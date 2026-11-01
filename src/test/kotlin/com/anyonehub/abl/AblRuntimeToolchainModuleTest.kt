@@ -74,3 +74,4 @@ class AblRuntimeToolchainModuleTest {
         assertEquals(dummyFile, RuntimeContainer.getMountedToolPath("aapt2"))
     }
 }
+

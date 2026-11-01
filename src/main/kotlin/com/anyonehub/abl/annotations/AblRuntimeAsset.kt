@@ -21,3 +21,4 @@ annotation class AblRuntimeAsset(
 annotation class AblRuntimeAssets(
     val value: Array<AblRuntimeAsset>
 )
+

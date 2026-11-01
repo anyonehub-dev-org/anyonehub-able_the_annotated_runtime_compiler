@@ -13,3 +13,4 @@ data class AblToolchainAssetDescriptor(
     val byteSize: Long = 0L,
     val mirrorBucket: String? = null
 )
+
