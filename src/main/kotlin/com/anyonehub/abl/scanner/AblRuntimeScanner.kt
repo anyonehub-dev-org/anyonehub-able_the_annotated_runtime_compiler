@@ -4,6 +4,9 @@ import com.anyonehub.abl.annotations.AblCompile
 import com.anyonehub.abl.annotations.AblEntryPoint
 import com.anyonehub.abl.annotations.AblInject
 import com.anyonehub.abl.annotations.AblModule
+import com.anyonehub.abl.annotations.AblTool
+import com.anyonehub.abl.annotations.AblRuntimeAsset
+import com.anyonehub.abl.annotations.AblRuntimeAssets
 import com.anyonehub.abl.utils.hasAblAnnotation
 import com.anyonehub.abl.utils.hasCachedAnnotation
 import kotlin.reflect.KClass
@@ -26,7 +29,9 @@ data class ScannedMetadata(
     val isCompileTarget: Boolean,
     val entryPoints: List<KFunction<*>>,
     val injectableProperties: List<KProperty1<*, *>>,
-    val injectableConstructorParameters: Boolean
+    val injectableConstructorParameters: Boolean,
+    val isTool: Boolean = false,
+    val runtimeAssets: List<AblRuntimeAsset> = emptyList()
 )
 
 class AblRuntimeScanner(private val cacheManager: AblCacheManager? = null) {
@@ -38,6 +43,11 @@ class AblRuntimeScanner(private val cacheManager: AblCacheManager? = null) {
     fun scan(target: KClass<*>): ScannedMetadata {
         val isModule = target.hasCachedAnnotation<AblModule>()
         val isCompileTarget = target.hasCachedAnnotation<AblCompile>()
+        val isTool = target.hasCachedAnnotation<AblTool>()
+
+        val singleAssets = target.annotations.filterIsInstance<AblRuntimeAsset>()
+        val containerAssets = target.annotations.filterIsInstance<AblRuntimeAssets>().flatMap { it.value.toList() }
+        val runtimeAssets = (singleAssets + containerAssets).distinctBy { it.id }
 
         val entryPoints = target.declaredMemberFunctions.filter { function ->
             function.hasAblAnnotation<AblEntryPoint>()
@@ -56,7 +66,9 @@ class AblRuntimeScanner(private val cacheManager: AblCacheManager? = null) {
             isCompileTarget = isCompileTarget,
             entryPoints = entryPoints,
             injectableProperties = injectableProperties,
-            injectableConstructorParameters = injectableConstructorParameters
+            injectableConstructorParameters = injectableConstructorParameters,
+            isTool = isTool,
+            runtimeAssets = runtimeAssets
         )
     }
     
@@ -101,7 +113,10 @@ class AblRuntimeScanner(private val cacheManager: AblCacheManager? = null) {
             isCompileTarget = cachedData.isCompileTarget,
             entryPoints = entryPoints,
             injectableProperties = injectables,
-            injectableConstructorParameters = cachedData.injectableConstructorParameters
+            injectableConstructorParameters = cachedData.injectableConstructorParameters,
+            isTool = kClass.hasCachedAnnotation<AblTool>(),
+            runtimeAssets = (kClass.annotations.filterIsInstance<AblRuntimeAsset>() +
+                kClass.annotations.filterIsInstance<AblRuntimeAssets>().flatMap { it.value.toList() }).distinctBy { it.id }
         )
     }
     

@@ -1,11 +1,41 @@
 package com.anyonehub.abl.resources
 
+import com.anyonehub.abl.di.RuntimeContainer
 import com.anyonehub.abl.exceptions.AblCompilationException
 import com.anyonehub.abl.utils.EngineLogger
 import java.io.File
 import java.io.InputStreamReader
 
-class NativeAapt2Wrapper(private val aapt2BinaryPath: String) {
+class NativeAapt2Wrapper(private val explicitBinaryPath: String? = null) {
+
+    val aapt2BinaryPath: String
+        get() {
+            if (!explicitBinaryPath.isNullOrEmpty() && File(explicitBinaryPath).exists()) {
+                return explicitBinaryPath
+            }
+            // Check RuntimeContainer for provisioned paths
+            val directMounted = RuntimeContainer.getMountedToolPath("aapt2")
+            if (directMounted != null && directMounted.exists()) {
+                return directMounted.absolutePath
+            }
+            val searchPaths = listOf(
+                RuntimeContainer.getMountedToolPath("build-tools-34.0.4-aarch64"),
+                RuntimeContainer.getMountedToolPath("android-sdk-tools-static-aarch64"),
+                RuntimeContainer.getMountedToolPath("build-tools")
+            ).filterNotNull()
+
+            for (dir in searchPaths) {
+                val candidates = listOf(
+                    File(dir, "34.0.4/aapt2"),
+                    File(dir, "build-tools/aapt2"),
+                    File(dir, "aapt2")
+                )
+                for (cand in candidates) {
+                    if (cand.exists()) return cand.absolutePath
+                }
+            }
+            return explicitBinaryPath ?: "aapt2"
+        }
 
     fun compile(resDir: File, outputDir: File) {
         val command = listOf(

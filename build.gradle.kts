@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.anyonehub"
-version = "1.1.0"
+version = "1.2.0"
 
 repositories {
     google()
@@ -36,6 +36,13 @@ dependencies {
     
     // FlatBuffers for zero-copy AST serialization
     implementation("com.google.flatbuffers:flatbuffers-java:25.2.10")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
 }
 
 val generateFlatBuffers = tasks.register<Exec>("generateFlatBuffers") {

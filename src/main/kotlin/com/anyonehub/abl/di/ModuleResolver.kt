@@ -1,6 +1,9 @@
 package com.anyonehub.abl.di
 
 import com.anyonehub.abl.annotations.AblInject
+import com.anyonehub.abl.annotations.AblRuntimeAsset
+import com.anyonehub.abl.annotations.AblRuntimeAssets
+import com.anyonehub.abl.annotations.AblToolchainAssetDescriptor
 import com.anyonehub.abl.exceptions.AblScannerException
 import com.anyonehub.abl.scanner.ExecutionMap
 import kotlin.reflect.KClass
@@ -91,6 +94,36 @@ class ModuleResolver {
             // Auto-cache and register the resolved instance
             @Suppress("UNCHECKED_CAST")
             RuntimeContainer.registerInstance(kClass as KClass<Any>, instance)
+
+            // Register any declared @AblRuntimeAsset annotations into RuntimeContainer
+            kClass.annotations.filterIsInstance<AblRuntimeAsset>().forEach { asset ->
+                RuntimeContainer.registerToolchainAsset(
+                    AblToolchainAssetDescriptor(
+                        id = asset.id,
+                        bucket = asset.bucket,
+                        fileName = asset.fileName,
+                        sha256 = asset.sha256,
+                        arch = asset.arch,
+                        isDexedJar = asset.isDexedJar,
+                        byteSize = asset.byteSize
+                    )
+                )
+            }
+            kClass.annotations.filterIsInstance<AblRuntimeAssets>().forEach { container ->
+                for (asset in container.value) {
+                    RuntimeContainer.registerToolchainAsset(
+                        AblToolchainAssetDescriptor(
+                            id = asset.id,
+                            bucket = asset.bucket,
+                            fileName = asset.fileName,
+                            sha256 = asset.sha256,
+                            arch = asset.arch,
+                            isDexedJar = asset.isDexedJar,
+                            byteSize = asset.byteSize
+                        )
+                    )
+                }
+            }
 
             return instance
         } catch (e: Exception) {

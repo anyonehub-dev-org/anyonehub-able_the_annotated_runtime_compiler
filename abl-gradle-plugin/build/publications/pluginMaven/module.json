@@ -3,7 +3,7 @@
   "component": {
     "group": "com.anyonehub",
     "module": "abl-gradle-plugin",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "attributes": {
       "org.gradle.status": "release"
     }
@@ -27,13 +27,13 @@
       },
       "files": [
         {
-          "name": "abl-gradle-plugin-1.1.0.jar",
-          "url": "abl-gradle-plugin-1.1.0.jar",
-          "size": 33963,
-          "sha512": "c394b5006be18f8b492c87022fac79f8d11a659c97c20d511137273c9bbc6465ab01317860b76499e591d839c5e5fd58e3c4f10365039fd27e7d37d836f92299",
-          "sha256": "57f2052195ebbd7dd659f1bfa1ea6a1bc8c30181bdff5ef01b54ef1a60c51a5c",
-          "sha1": "35ab6e383e0b226b5fd3f18f6c793d1381423f72",
-          "md5": "b6172681d587415493a2c8153dad7e2d"
+          "name": "abl-gradle-plugin-1.2.0.jar",
+          "url": "abl-gradle-plugin-1.2.0.jar",
+          "size": 33949,
+          "sha512": "795b6fea1de1dc6e66d60e78c2e0679f2be4eff1534a9607bd8b53c159afbdfcfe9087cbc908a2491c711ced7d652f430a3e858e3b76209e94dcc7ad5b0d0d9e",
+          "sha256": "fd55935ad4765ee89ee12c38a6f85039a0e855c7e4653c6c2ffa60b9961da5de",
+          "sha1": "279413558a3093141c3fa4ef71b02d85e1eb5ed1",
+          "md5": "a38872a76ca52a3cabc5c0f0054711bb"
         }
       ]
     },
@@ -53,19 +53,19 @@
           "group": "com.anyonehub",
           "module": "abl-runtime-compiler",
           "version": {
-            "requires": "1.1.0"
+            "requires": "1.2.0"
           }
         }
       ],
       "files": [
         {
-          "name": "abl-gradle-plugin-1.1.0.jar",
-          "url": "abl-gradle-plugin-1.1.0.jar",
-          "size": 33963,
-          "sha512": "c394b5006be18f8b492c87022fac79f8d11a659c97c20d511137273c9bbc6465ab01317860b76499e591d839c5e5fd58e3c4f10365039fd27e7d37d836f92299",
-          "sha256": "57f2052195ebbd7dd659f1bfa1ea6a1bc8c30181bdff5ef01b54ef1a60c51a5c",
-          "sha1": "35ab6e383e0b226b5fd3f18f6c793d1381423f72",
-          "md5": "b6172681d587415493a2c8153dad7e2d"
+          "name": "abl-gradle-plugin-1.2.0.jar",
+          "url": "abl-gradle-plugin-1.2.0.jar",
+          "size": 33949,
+          "sha512": "795b6fea1de1dc6e66d60e78c2e0679f2be4eff1534a9607bd8b53c159afbdfcfe9087cbc908a2491c711ced7d652f430a3e858e3b76209e94dcc7ad5b0d0d9e",
+          "sha256": "fd55935ad4765ee89ee12c38a6f85039a0e855c7e4653c6c2ffa60b9961da5de",
+          "sha1": "279413558a3093141c3fa4ef71b02d85e1eb5ed1",
+          "md5": "a38872a76ca52a3cabc5c0f0054711bb"
         }
       ]
     }

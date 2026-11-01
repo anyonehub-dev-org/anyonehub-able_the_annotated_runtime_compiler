@@ -1,5 +1,7 @@
 package com.anyonehub.abl.di
 
+import com.anyonehub.abl.annotations.AblToolchainAssetDescriptor
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
@@ -8,6 +10,48 @@ object RuntimeContainer {
     private val classRegistry = ConcurrentHashMap<KClass<*>, Any>()
     private val nameRegistry = ConcurrentHashMap<String, Any>()
     private val factoryRegistry = ConcurrentHashMap<String, () -> Any>()
+
+    private val toolchainDescriptors = ConcurrentHashMap<String, AblToolchainAssetDescriptor>()
+    private val mountedClassLoaders = ConcurrentHashMap<String, ClassLoader>()
+    private val mountedToolPaths = ConcurrentHashMap<String, File>()
+
+    init {
+        AblRuntimeToolchainModule.registerDefaults(this)
+    }
+
+    fun registerToolchainAsset(descriptor: AblToolchainAssetDescriptor) {
+        toolchainDescriptors[descriptor.id] = descriptor
+        toolchainDescriptors[descriptor.fileName] = descriptor
+    }
+
+    fun getToolchainAsset(idOrFileName: String): AblToolchainAssetDescriptor? {
+        return toolchainDescriptors[idOrFileName]
+    }
+
+    fun getAllToolchainAssets(): List<AblToolchainAssetDescriptor> {
+        return toolchainDescriptors.values.distinctBy { it.id }
+    }
+
+    fun mountClassLoader(id: String, classLoader: ClassLoader) {
+        mountedClassLoaders[id] = classLoader
+        val normalized = id.removeSuffix(".jar")
+        mountedClassLoaders[normalized] = classLoader
+    }
+
+    fun getMountedClassLoader(id: String): ClassLoader? {
+        val normalized = id.removeSuffix(".jar")
+        return mountedClassLoaders[id] ?: mountedClassLoaders[normalized]
+    }
+
+    fun getAllMountedClassLoaders(): Map<String, ClassLoader> = mountedClassLoaders
+
+    fun mountToolPath(toolName: String, path: File) {
+        mountedToolPaths[toolName] = path
+    }
+
+    fun getMountedToolPath(toolName: String): File? = mountedToolPaths[toolName]
+
+    fun getAllMountedToolPaths(): Map<String, File> = mountedToolPaths
 
     fun <T : Any> registerInstance(type: KClass<T>, instance: T) {
         classRegistry[type] = instance
@@ -88,5 +132,9 @@ object RuntimeContainer {
         classRegistry.clear()
         nameRegistry.clear()
         factoryRegistry.clear()
+        toolchainDescriptors.clear()
+        mountedClassLoaders.clear()
+        mountedToolPaths.clear()
+        AblRuntimeToolchainModule.registerDefaults(this)
     }
 }

@@ -1,5 +1,6 @@
 package com.anyonehub.abl.compiler
 
+import com.anyonehub.abl.di.RuntimeContainer
 import com.anyonehub.abl.packaging.ApkPackager
 import com.anyonehub.abl.packaging.ZipAligner
 import com.anyonehub.abl.resources.NativeAapt2Wrapper
@@ -35,14 +36,25 @@ class ApkBuildPipeline(
         val workspace = File(outputApk.parentFile, "build_workspace").apply { mkdirs() }
         
         try {
-            // Step 1: AAPT2 Native Execution (libaapt2.so via W^X bypass)
+            // Step 1: AAPT2 Native Execution (libaapt2.so via W^X bypass or provisioned toolchain)
             EngineLogger.logInfo("Compiling and linking resources natively...")
             val compiledResDir = File(workspace, "compiled_res").apply { mkdirs() }
             aapt2Wrapper.compile(resDir, compiledResDir)
             
             val generatedJavaDir = File(workspace, "generated_java").apply { mkdirs() }
             val linkedApk = File(workspace, "linked.apk")
-            aapt2Wrapper.link(manifestFile, compiledResDir, androidJar, linkedApk, generatedJavaDir)
+
+            val effectiveAndroidJar = if (androidJar.exists()) androidJar else {
+                RuntimeContainer.getMountedToolPath("android.jar")
+                    ?: RuntimeContainer.getMountedToolPath("android-sdk")?.let { dir ->
+                        File(dir, "platforms/android-33/android.jar").takeIf { it.exists() }
+                            ?: File(dir, "platforms/android-34/android.jar").takeIf { it.exists() }
+                            ?: File(dir, "platforms/android-37/android.jar").takeIf { it.exists() }
+                            ?: File(dir, "android.jar").takeIf { it.exists() }
+                    } ?: androidJar
+            }
+
+            aapt2Wrapper.link(manifestFile, compiledResDir, effectiveAndroidJar, linkedApk, generatedJavaDir)
             
             val combinedSources = kotlinSources.toMutableMap()
             generatedJavaDir.walkTopDown().filter { it.extension == "java" }.forEach { 
@@ -53,7 +65,7 @@ class ApkBuildPipeline(
             
             // Step 2 & 3: Kotlin Compilation & In-Memory D8 DEXing
             EngineLogger.logInfo("Compiling Kotlin sources and transpiling to DEX in-memory...")
-            val fullClasspath = mutableListOf(androidJar)
+            val fullClasspath = mutableListOf(effectiveAndroidJar)
             fullClasspath.addAll(classpath)
             val dexBytes = executionPipeline.compileAndRun(emptyList(), combinedSources, fullClasspath)
             
@@ -62,10 +74,32 @@ class ApkBuildPipeline(
             val unalignedApk = File(workspace, "unaligned.apk")
             packager.packageApk(dexBytes, linkedApk, unalignedApk)
             
-            // Step 5: Zipalign (Memory/Stream Alignment)
+            // Step 5: Zipalign (Memory/Stream Alignment or Provisioned Binary)
             EngineLogger.logInfo("Performing Zipalign...")
             val alignedApk = File(workspace, "aligned.apk")
-            zipAligner.align(unalignedApk, alignedApk)
+
+            val nativeZipalign = RuntimeContainer.getMountedToolPath("zipalign")
+                ?: RuntimeContainer.getMountedToolPath("build-tools-34.0.4-aarch64")?.let { dir ->
+                    File(dir, "34.0.4/zipalign").takeIf { it.exists() }
+                        ?: File(dir, "build-tools/zipalign").takeIf { it.exists() }
+                        ?: File(dir, "zipalign").takeIf { it.exists() }
+                }
+
+            if (nativeZipalign != null && nativeZipalign.exists() && nativeZipalign.canExecute()) {
+                try {
+                    val process = ProcessBuilder(nativeZipalign.absolutePath, "-p", "-f", "4", unalignedApk.absolutePath, alignedApk.absolutePath)
+                        .redirectErrorStream(true)
+                        .start()
+                    val exit = process.waitFor()
+                    if (exit != 0) {
+                        zipAligner.align(unalignedApk, alignedApk)
+                    }
+                } catch (_: Exception) {
+                    zipAligner.align(unalignedApk, alignedApk)
+                }
+            } else {
+                zipAligner.align(unalignedApk, alignedApk)
+            }
             
             // Step 6: Load Keystore and Sign with apksig
             EngineLogger.logInfo("Signing APK...")
